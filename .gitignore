@@ -24,3 +24,6 @@ Thumbs.db
 # agent API keys
 .agents.json
 config/roles.local.json
+state/*.log
+state/*.out
+state/playbooks/*.md
