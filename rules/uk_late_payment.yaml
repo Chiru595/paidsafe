@@ -1,0 +1,18 @@
+# UK: Late Payment of Commercial Debts (Interest) Act 1998. Information only. Not legal advice.
+jurisdiction: uk_late_payment
+interest:
+  method: simple
+  points_above_base_rate: 8
+  source_url: "https://www.legislation.gov.uk/ukpga/1998/20"
+  as_of: "2026-11-07"
+base_rate:
+  value_pct: 4.00
+  source_url: "https://www.bankofengland.co.uk/monetary-policy/the-interest-rate-bank-rate"
+  as_of: "2026-08-07"
+  note: "Accountant must confirm the current Bank of England base rate."
+fixed_compensation_gbp:
+  - {below: 1000, amount: 40}
+  - {below: 10000, amount: 70}
+  - {below: null, amount: 100}
+max_rate_age_days: 120
+disclaimer: "Calculations follow the cited public rules for information only. Not legal or financial advice."

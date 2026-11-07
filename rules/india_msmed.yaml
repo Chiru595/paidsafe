@@ -1,0 +1,36 @@
+# India: MSMED Act 2006 (delayed payments to micro and small enterprises) + Income Tax Act s.43B(h).
+# Every value carries source_url and as_of. The Ledger refuses to calculate with a rate older than
+# max_rate_age_days unless the Accountant confirms it.
+# Information only. Not legal or financial advice.
+jurisdiction: india_msmed
+applies_to: "Udyam-registered micro and small enterprise suppliers (s.43B(h) does not apply to pure traders)"
+payment_deadline:
+  max_days_with_agreement: 45
+  days_without_agreement: 15
+  source_url: "https://www.indiacode.nic.in/handle/123456789/2013"   # MSMED Act s.15
+  as_of: "2026-11-07"
+interest:
+  method: compound_monthly_rests
+  multiple_of_bank_rate: 3
+  starts: day_after_due_date
+  source_url: "https://www.indiacode.nic.in/handle/123456789/2013"   # MSMED Act s.16
+  as_of: "2026-11-07"
+bank_rate:
+  value_pct: 5.50
+  source_url: "https://www.rbi.org.in/"   # RBI Bank Rate; re-check before relying on it
+  as_of: "2026-08-06"
+  note: "Entered from an Aug 2026 secondary source. Accountant must confirm the current figure."
+max_rate_age_days: 120
+interest_not_deductible_for_buyer:
+  section: "MSMED Act s.23"
+  source_url: "https://www.indiacode.nic.in/handle/123456789/2013"
+tax_lever:
+  section: "Income Tax Act s.43B(h)"
+  rule: "If the buyer pays an MSE after the s.15 deadline, the expense is deductible only in the year actually paid."
+  illustrative_tax_rate_pct: 25
+  source_url: "https://incometaxindia.gov.in/"
+  as_of: "2026-11-07"
+forums:
+  - "State MSME Facilitation Council (MSEFC)"
+  - "MSME Samadhaan portal: https://samadhaan.msme.gov.in/"
+disclaimer: "Calculations follow the cited public rules for information only. Not legal or financial advice."

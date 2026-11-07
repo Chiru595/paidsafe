@@ -1,0 +1,19 @@
+{
+  "_synthetic": "Fictional demo data.",
+  "megamart": {
+    "name": "MegaMart Retail",
+    "room": "client-megamart",
+    "jurisdiction": "india_msmed",
+    "revenue_share_pct": 30,
+    "late_history": {"invoices_last_12m": 6, "paid_late": 5, "avg_days_late": 28},
+    "contact": "accounts@megamart.example"
+  },
+  "blueleaf": {
+    "name": "BlueLeaf Foods",
+    "room": "client-blueleaf",
+    "jurisdiction": "india_msmed",
+    "revenue_share_pct": 12,
+    "late_history": {"invoices_last_12m": 8, "paid_late": 0, "avg_days_late": 0},
+    "contact": "finance@blueleaf.example"
+  }
+}
