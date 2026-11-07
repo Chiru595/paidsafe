@@ -54,7 +54,7 @@ h2{font-size:64px;font-weight:750;letter-spacing:-.01em;line-height:1.1}
   border:2px solid #2c3c72;text-align:center}
 .node b{display:block;font-size:34px}.node span{display:block;font-size:22px;color:var(--mute);margin-top:6px}
 .node.h{border-color:#3b82f6}.node.c{border-color:#34d399}.node.l{border-color:#a78bfa}
-.hub{position:absolute;left:760px;top:300px;width:400px;height:170px;border-radius:30px;
+.hub{position:absolute;left:620px;top:300px;width:400px;height:170px;border-radius:30px;
   background:linear-gradient(135deg,#0f766e,#1d4ed8);display:flex;align-items:center;justify-content:center;
   flex-direction:column;box-shadow:0 30px 80px #0008}
 .hub b{font-size:40px}.hub span{font-size:24px;opacity:.85}
@@ -111,13 +111,13 @@ def scene_html(sid: str, kind: str, extra: dict) -> str:
  interest at 3× the RBI Bank Rate. Most suppliers never claim it, for fear of losing the client.</div>"""
     if kind == "room":
         nodes = [
-            ("h", 60, 40, "Owner", "verified human"), ("h", 60, 560, "Accountant", "verified human"),
-            ("l", 1560, 40, "Ledger", "code · no LLM"), ("l", 1560, 560, "Warden", "code · no LLM"),
-            ("c", 640, 0, "Relationship", "Claude Opus 5.5"), ("c", 980, 600, "Cash", "Claude Sonnet 5.5"),
+            ("h", 0, 60, "Owner", "verified human"), ("h", 0, 560, "Accountant", "verified human"),
+            ("l", 1340, 60, "Ledger", "code · no LLM"), ("l", 1340, 560, "Warden", "code · no LLM"),
+            ("c", 670, 0, "Relationship", "Claude Opus 5.5"), ("c", 670, 620, "Cash", "Claude Sonnet 5.5"),
         ]
         nh = "".join(f'<div class="node {c} a" data-in="{0.6 + i * 0.5}" style="left:{x}px;top:{y}px">'
                      f'<b>{n}</b><span>{d}</span></div>' for i, (c, x, y, n, d) in enumerate(nodes))
-        lines = "".join(f'<line x1="{x + 150}" y1="{y + 60}" x2="960" y2="385" stroke="#2c3c72" stroke-width="3" '
+        lines = "".join(f'<line x1="{x + 150}" y1="{y + 60}" x2="820" y2="385" stroke="#2c3c72" stroke-width="3" '
                         f'stroke-dasharray="900" class="draw" data-in="{0.6 + i * 0.5}"/>'
                         for i, (_, x, y, *_r) in enumerate(nodes))
         return f"""<div class="bgglow"></div><div class="kicker a" data-in="0">One room · two people · four agents</div>
@@ -225,7 +225,7 @@ def main() -> None:
                        f"afade=t=out:st={total - 1.2:.2f}:d=1.2[aout]")
         audio = WORK / "narration.m4a"
         subprocess.run([FF, "-y", *inputs, "-filter_complex", ";".join(filters), "-map", "[aout]",
-                        "-c:a", "aac", "-b:a", "192k", str(audio)], check=True, capture_output=True)
+                        "-c:a", "aac", "-b:a", "192k", "-ar", "48000", "-ac", "2", str(audio)], check=True, capture_output=True)
 
         out = WORK / "paidsafe.mp4"
         enc = subprocess.Popen([FF, "-y", "-f", "image2pipe", "-framerate", str(FPS), "-i", "-", "-i", str(audio),
