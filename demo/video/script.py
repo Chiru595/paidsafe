@@ -61,5 +61,5 @@ SCENES = [
      "Today, it's one mock client with four basic agents. The same template scales to a room per client, more "
      "agents, and supplier fraud checks.", {}),
     ("end", "end",
-     "PaidSafe. Decide with proof. Approve with certainty.", {}),
+     "PaidSafe. Decide with proof. Approve with certainty. Learn from every outcome.", {}),
 ]

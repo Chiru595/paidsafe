@@ -88,7 +88,7 @@ svg.lines{position:absolute;inset:0}
 .chk{font-size:34px;display:flex;gap:18px;align-items:flex-start}
 .chk i{font-style:normal;color:var(--acc);font-weight:800}
 .chk small{display:block;color:var(--mute);font-size:24px;margin-top:4px}
-.rm{display:grid;grid-template-columns:520px 120px 1fr;align-items:center;margin-top:60px}
+.rm{display:grid;grid-template-columns:520px 120px 1fr;align-items:center;margin-top:110px}
 .roomcard{background:var(--panel);border:2px solid #2c3c72;border-radius:22px;padding:24px 28px;font-size:28px}
 .roomcard small{display:block;color:var(--mute);font-size:21px;margin-top:6px}
 .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
@@ -210,10 +210,10 @@ def scene_html(sid: str, kind: str, extra: dict) -> str:
         cards = "".join(f'<div class="roomcard a" data-in="{4.5 + i * 0.7}">{a}<small>{b}</small></div>' for i, (a, b) in enumerate(nxt))
         return f"""<div class="bgglow"></div><div class="kicker a" data-in="0">Today → next</div>
 <h2 class="a" data-in="0.2" style="margin-top:12px">Small today. Built to scale.</h2>
-<div class="rm"><div class="a" data-in="1.0"><div class="small" style="margin-bottom:12px">TODAY</div>
+<div class="rm"><div class="a" data-in="1.0" style="position:relative"><div class="small" style="position:absolute;top:-48px;left:0">TODAY</div>
  <div class="roomcard" style="border-color:var(--acc)">#client-megamart<small>1 mock client · 4 basic agents · 2 people</small></div></div>
  <svg width="120" height="60"><path class="draw" data-in="3.4" pathLength="1" d="M10 30 H100 M80 12 L100 30 L80 48" stroke="#34d399" stroke-width="6" fill="none" stroke-linecap="round"/></svg>
- <div><div class="small a" data-in="4.2" style="margin-bottom:12px">NEXT, FROM THE SAME TEMPLATE</div><div class="rgrid">{cards}</div></div></div>"""
+ <div style="position:relative"><div class="small a" data-in="4.2" style="position:absolute;top:-48px;left:0">NEXT, FROM THE SAME TEMPLATE</div><div class="rgrid">{cards}</div></div></div>"""
     if kind == "end":
         return f"""<div class="bgglow"></div>
 <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
