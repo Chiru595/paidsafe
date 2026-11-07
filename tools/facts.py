@@ -1,4 +1,4 @@
-"""Ledger fact cards (F1..F6) and the options card, built from data and rule packs with no LLM.
+"""Ledger fact cards (F1..F6, plus F7 memory) and the options card, built from data and rule packs with no LLM.
 
 Each card carries the numbers it states (`values`), so the fact-checker can tell whether a debater quoted a
 card correctly.
@@ -10,9 +10,8 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from tools.common import DISCLAIMER, DATA, ROOT, as_of_date, inr, load_invoices, load_json, load_rules
+from tools import memory
 from tools.interest import invoice_interest
-
-PLAYBOOKS = ROOT / "state" / "playbooks"
 
 
 @dataclass
@@ -44,7 +43,7 @@ def build_facts(invoice_id: str = "INV-1042", on: date | None = None) -> list[Fa
     tax_rate = rules["tax_lever"]["illustrative_tax_rate_pct"]
     tax_at_stake = amount * tax_rate / 100
 
-    return [
+    facts = [
         Fact("F1", f"{invoice_id} to {client['name']}: {inr(amount)}, accepted on {accepted:%d %b %Y}, "
                    f"{days_since} days ago.",
              [amount, days_since, float(invoice_id.split('-')[1])], "data/invoices.csv"),
@@ -69,6 +68,14 @@ def build_facts(invoice_id: str = "INV-1042", on: date | None = None) -> list[Fa
                    f"{inr(tax_at_stake)} of deduction timing at stake for the buyer.",
              [43, amount, tax_rate, tax_at_stake], rules["tax_lever"]["source_url"]),
     ]
+    past = memory.latest_with_outcome(inv["client"])
+    if past:
+        o = past["outcome"]
+        facts.append(Fact(
+            "F7", f"Memory: on {past['date']}, {past['invoice']} got option ({past['option']}) {past['label'].split(' citing')[0].lower()}; "
+                  f"outcome: **{memory.describe_outcome(o)}** (recorded by the verified Accountant).",
+            [float(o["days"])] if o.get("days") is not None else [], f"room playbook, facts {past['facts_hash']}"))
+    return facts
 
 
 def facts_index(facts: list[Fact]) -> dict[str, Fact]:
@@ -76,16 +83,14 @@ def facts_index(facts: list[Fact]) -> dict[str, Fact]:
 
 
 def read_playbook(client_key: str) -> str:
-    path = PLAYBOOKS / f"{client_key}.md"
-    return path.read_text(encoding="utf-8").strip() if path.exists() else ""
+    return memory.render_md(client_key).strip()
 
 
 def render_fact_cards(facts: list[Fact], client_key: str = "megamart") -> str:
     lines = ["### 📒 Ledger fact cards", *[f"- {f.render()}" for f in facts]]
-    pb = read_playbook(client_key)
-    if pb:
-        entries = [l for l in pb.splitlines() if l.startswith("- ")]
-        lines += ["", f"**Playbook loaded** ({len(entries)} past decision(s)). Latest: {entries[-1][2:] if entries else ''}"]
+    if any(f.id == "F7" for f in facts):
+        lines += ["", "🧠 **Memory loaded:** F7 comes from this room's playbook, so this debate starts from what "
+                      "actually worked last time."]
     lines += ["", f"_{DISCLAIMER} All data is synthetic._"]
     return "\n".join(lines)
 
@@ -111,9 +116,13 @@ def options_card(invoice_id: str = "INV-1042", on: date | None = None) -> str:
         "C": f"claim {inr(amount + interest)} with legal backing; highest relationship risk [F4]",
         "D": f"runway drops by 2 weeks of burn ({inr(2 * burn)}) to {(cash['bank_balance_inr'] - 2 * burn) / burn:.1f} weeks [F5]; interest keeps accruing [F3]",
     }
+    past = memory.latest_with_outcome(inv["client"])
+    worked = past["option"] if past and past["outcome"]["status"] == "paid" else None
     lines = ["### 🧾 Options card (Ledger, template-based)"]
     for k, (desc, side) in OPTIONS.items():
-        lines.append(f"- **({k})** {desc}. Cash impact: {impact[k]}. _Drafted by: {side}_")
+        star = (f" ⭐ **Worked before with this client: {memory.describe_outcome(past['outcome'])} [F7].**"
+                if k == worked else "")
+        lines.append(f"- **({k})** {desc}. Cash impact: {impact[k]}.{star} _Drafted by: {side}_")
     lines += ["", "Every impact above is computed from the cited fact cards. "
               "Owner: reply `approve A`, `approve B`, `approve C` or `approve D`."]
     return "\n".join(lines)

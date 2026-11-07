@@ -2,3 +2,4 @@ invoice_id,client,amount_inr,accepted_on,written_agreement,agreed_days,status
 INV-1042,megamart,480000,2026-09-06,yes,30,unpaid
 INV-1031,megamart,215000,2026-07-02,yes,30,paid
 INV-1050,blueleaf,96000,2026-10-20,yes,30,unpaid
+INV-1058,megamart,312000,2026-09-20,yes,30,unpaid

@@ -13,10 +13,9 @@ import argparse
 import hashlib
 from datetime import datetime
 
-from tools.common import OUTBOX, ROOT, audit, get_state, has_approval, require_not_frozen, set_state
+from tools.common import OUTBOX, ROOT, audit, get_state, has_approval, load_invoices, require_not_frozen, set_state
+from tools import memory
 from tools.evidence import render_proofs, verify_draft
-
-PLAYBOOKS = ROOT / "state" / "playbooks"
 
 
 class NotApproved(PermissionError):
@@ -27,8 +26,9 @@ def draft_hash(text: str) -> str:
     return hashlib.sha256(text.strip().encode("utf-8")).hexdigest()[:10]
 
 
-def send(room: str, invoice_id: str = "INV-1042", client_key: str = "megamart") -> str:
+def send(room: str, invoice_id: str = "INV-1042", client_key: str | None = None) -> str:
     require_not_frozen(room)
+    client_key = client_key or load_invoices()[invoice_id]["client"]
     decision = get_state(room, "decision")
     draft = get_state(room, "draft")
     if not decision:
@@ -62,24 +62,12 @@ def send(room: str, invoice_id: str = "INV-1042", client_key: str = "megamart") 
     set_state(room, "sent_hash", h)
     audit("send", room, None, f"simulated send of {invoice_id} option {decision['option']}", draft=h, file=path.name,
           facts_hash=ev.facts_hash, evidence=[p["fact"] for p in ev.proofs])
-    append_playbook(client_key, invoice_id, decision["option"], decision.get("label", ""),
-                    sorted({p["fact"] for p in ev.proofs}), ev.facts_hash)
+    memory.record_decision(client_key, invoice_id, decision["option"], decision.get("label", ""),
+                           sorted({p["fact"] for p in ev.proofs}), ev.facts_hash, h)
     try:
         return str(path.relative_to(ROOT)).replace("\\", "/")
     except ValueError:
         return str(path)
-
-
-def append_playbook(client_key: str, invoice_id: str, option: str, label: str,
-                    evidence: list[str] | None = None, fhash: str = "") -> None:
-    PLAYBOOKS.mkdir(parents=True, exist_ok=True)
-    path = PLAYBOOKS / f"{client_key}.md"
-    if not path.exists():
-        path.write_text(f"# Playbook: {client_key}\n\n", encoding="utf-8")
-    with open(path, "a", encoding="utf-8") as f:
-        f.write(f"- {datetime.now():%Y-%m-%d}: {invoice_id} -> option {option} ({label}). "
-                f"Evidence: {', '.join(evidence or []) or 'n/a'} (facts {fhash}). "
-                f"Approved by the verified Accountant and Owner. Outcome: pending (fill in when paid).\n")
 
 
 if __name__ == "__main__":

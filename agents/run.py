@@ -59,7 +59,7 @@ async def main() -> None:
             role = load_roles().get(p.get("sender", ""), "no role")
             return [f"🪪 Switch sender id for **{p.get('sender_name')}**: `{p.get('sender')}` ({role})"]
         replies = warden.on_message(p.get("sender", ""), p.get("sender_name", ""), body)
-        if any(r.startswith("📤") for r in replies):
+        if any(r.startswith(("📤", "📒")) for r in replies):
             await asyncio.to_thread(sync_playbook_doc)
         return replies
 

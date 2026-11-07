@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import re
 
-from tools.common import frozen_info, get_state, is_auto_reply, load_roles, set_state
+from tools.common import frozen_info, get_state, is_auto_reply, load_invoices, load_roles, set_state
 from tools.factcheck import check, render
 from tools.facts import build_facts, options_card, render_fact_cards
 
@@ -36,22 +36,32 @@ class Ledger:
         if name in self.debaters and sender_id not in load_roles():
             return [] if is_auto_reply(text) else self._on_debater(name, text)
         if addressed and START.search(text):
-            return self._start(sender_id)
+            return self._start(sender_id, text)
         return []
 
-    def _start(self, sender_id: str) -> list[str]:
+    def _pick_invoice(self, text: str) -> str:
+        """The invoice named in the Owner's message, if it exists in the ledger; else the default."""
+        invoices = load_invoices()
+        m = re.search(r"\bINV-\d+\b", text or "", re.I)
+        return m.group(0).upper() if m and m.group(0).upper() in invoices else self.invoice_id
+
+    def _inv(self) -> str:
+        return (get_state(self.room, "debate") or {}).get("invoice", self.invoice_id)
+
+    def _start(self, sender_id: str, text: str = "") -> list[str]:
         if frozen_info(self.room):
             return ["🧊 Room is frozen. The Ledger will not open a debate until it is resumed."]
         role = load_roles().get(sender_id)
         if role != "owner":
             return ["⛔ Only the verified Owner can open a debate (checked by Switch sender id)."]
-        for key, val in (("debate", {"status": "round1", "posted": {}, "posts": {}}), ("decision", None),
+        inv = self._pick_invoice(text)
+        for key, val in (("debate", {"status": "round1", "posted": {}, "posts": {}, "invoice": inv}), ("decision", None),
                          ("draft", None), ("draft_request", None), ("overflow", 0), ("agent_streak", 0)):
             set_state(self.room, key, val)
-        facts = render_fact_cards(build_facts(self.invoice_id), self.client_key)
+        facts = render_fact_cards(build_facts(inv), load_invoices()[inv]["client"])
         mentions = " ".join(f"@{d}" for d in self.debaters)
         return [facts,
-                f"### 🥊 Round 1 of 2\n{mentions} {self.invoice_id} is late. **Chase or wait?** "
+                f"### 🥊 Round 1 of 2\n{mentions} {inv} is late. **Chase or wait?** "
                 f"Give your recommendation independently, under 150 words. "
                 f"**Every number must cite a fact card like [F3]**; uncited or wrong numbers get flagged ❌."]
 
@@ -60,7 +70,8 @@ class Ledger:
         status = debate.get("status")
         if status not in ("round1", "round2") or frozen_info(self.room):
             return []
-        out = [render(name, check(text, build_facts(self.invoice_id), require_citation=True))]
+        inv = debate.get("invoice", self.invoice_id)
+        out = [render(name, check(text, build_facts(inv), require_citation=True))]
         posted = debate.setdefault("posted", {})
         posts = debate.setdefault("posts", {})
         if name not in posted:
@@ -69,13 +80,13 @@ class Ledger:
         if all(d in posted for d in self.debaters):
             if status == "round1":
                 a, b = self.debaters[0], self.debaters[1]
-                debate = {"status": "round2", "posted": {}, "posts": {}}
+                debate = {"status": "round2", "posted": {}, "posts": {}, "invoice": inv}
                 out.append(
                     f"### 🥊 Round 2 of 2 (rebuttal)\n"
                     f"@{a} rebut {b}:\n{_quote(posts[b])}\n\n@{b} rebut {a}:\n{_quote(posts[a])}\n\n"
                     f"Fact ids only. This is the last round.")
             else:
-                debate = {"status": "closed", "posted": {}, "posts": {}}
-                out.append(options_card(self.invoice_id))
+                debate = {"status": "closed", "posted": {}, "posts": {}, "invoice": inv}
+                out.append(options_card(inv))
         set_state(self.room, "debate", debate)
         return out

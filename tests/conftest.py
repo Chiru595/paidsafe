@@ -16,7 +16,7 @@ ROOM = "test-room"
 def isolated_state(tmp_path, monkeypatch):
     """Each test gets its own state db, outbox, playbooks and roles file."""
     import tools.common as common
-    import tools.facts as facts
+    import tools.memory as memory
     import tools.send_client_message as scm
 
     cfg = tmp_path / "config"
@@ -25,6 +25,5 @@ def isolated_state(tmp_path, monkeypatch):
     monkeypatch.setattr(common, "STATE_DIR", tmp_path / "state")
     monkeypatch.setattr(common, "CONFIG", cfg)
     monkeypatch.setattr(scm, "OUTBOX", tmp_path / "outbox")
-    monkeypatch.setattr(scm, "PLAYBOOKS", tmp_path / "playbooks")
-    monkeypatch.setattr(facts, "PLAYBOOKS", tmp_path / "playbooks")
+    monkeypatch.setattr(memory, "PLAYBOOKS", tmp_path / "playbooks")
     return tmp_path

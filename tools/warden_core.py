@@ -13,9 +13,11 @@ import re
 import time
 
 from tools.common import (
-    Frozen, audit, freeze, frozen_info, get_state, is_auto_reply, load_roles, record_approval, record_rejection,
+    Frozen, audit, freeze, frozen_info, get_state, is_auto_reply, load_invoices, load_roles, record_approval,
+    record_rejection,
     set_state, unfreeze,
 )
+from tools import memory
 from tools.evidence import render_proofs, verify_draft
 from tools.facts import OPTIONS
 from tools.send_client_message import NotApproved, draft_hash, send
@@ -31,6 +33,7 @@ APPROVE_OPTION = re.compile(r"^approve\s+\(?([A-D])\)?\.?$", re.I)
 # so the kill switch is addressed to the Warden: "@warden stopall", "@warden resume".
 STOP = re.compile(r"^!?stop\s*all\b", re.I)
 RESUME = re.compile(r"^!?resume\.?$", re.I)
+OUTCOME = re.compile(r"^outcome\s+(?:(paid)\s+(?:in\s+)?(\d{1,3})(?:\s*days?)?|(unpaid|disputed|partial))\.?$", re.I)
 
 
 def _clean(text: str) -> str:
@@ -44,6 +47,9 @@ class Warden:
         self.debaters = debaters or set(os.environ.get("PAIDSAFE_DEBATERS", "relationship,cash").split(","))
 
     # ----- helpers -----
+    def _inv(self) -> str:
+        return (get_state(self.room, "debate") or {}).get("invoice", self.invoice_id)
+
     def role_of(self, sender_id: str) -> str | None:
         return load_roles().get(sender_id)
 
@@ -97,7 +103,7 @@ class Warden:
 
     def _capture_draft(self, name: str, text: str) -> list[str]:
         h = draft_hash(text)
-        ev = verify_draft(text, self.invoice_id)
+        ev = verify_draft(text, self._inv())
         set_state(self.room, "draft", {"text": text.strip(), "hash": h, "by": name, "verified": ev.ok,
                                        "facts_hash": ev.facts_hash})
         audit("draft", self.room, None, f"draft captured from {name}", draft=h, verified=ev.ok,
@@ -138,6 +144,22 @@ class Warden:
             return [f"▶️ **Resumed** by the {role}. The room was frozen by {info['by_role']} for {mins:.1f} min "
                     f"({info['reason']})."]
 
+        m = OUTCOME.match(text)
+        if m:
+            if role != "accountant":
+                return self._reject(sender_id, sender_name, "outcome", "Accountant")
+            status, days = ("paid", int(m.group(2))) if m.group(1) else (m.group(3).lower(), None)
+            client = load_invoices()[self._inv()]["client"]
+            entry = memory.record_outcome(client, status, days)
+            if not entry:
+                return ["ℹ️ No sent decision is waiting for an outcome."]
+            audit("outcome", self.room, sender_id, f"{entry['invoice']} option {entry['option']}: {status}",
+                  days=days, role=role)
+            return [f"📒 **Outcome recorded** by the verified Accountant: {entry['invoice']}, option "
+                    f"({entry['option']}) → **{memory.describe_outcome(entry['outcome'])}**.\n"
+                    f"The next debate for this client will cite it as fact card **F7**, and the option that "
+                    f"worked will be marked on the options card."]
+
         m = APPROVE_OPTION.match(text)
         if m:
             if role != "owner":
@@ -170,7 +192,7 @@ class Warden:
         set_state(self.room, "draft_request", {"agent": side, "option": option})
         record_approval(self.room, "option", option, sender_id, "owner")
         return [f"✅ Owner chose **({option})** {label}.\n"
-                f"@{side} please draft the client message for option {option} to MegaMart about {self.invoice_id}. "
+                f"@{side} please draft the client message for option {option} to MegaMart about {self._inv()}. "
                 f"Plain client-facing text, no [F#] tags, amounts only from the fact cards."]
 
     def _approve(self, sender_id: str, role: str, kind: str) -> list[str]:
@@ -190,7 +212,7 @@ class Warden:
 
     def _try_send(self) -> list[str]:
         try:
-            path = send(self.room, self.invoice_id)
+            path = send(self.room, self._inv())
         except Frozen as e:
             return [f"🧊 Send refused: {e}"]
         except NotApproved as e:
