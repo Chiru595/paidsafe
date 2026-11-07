@@ -71,6 +71,11 @@ class AgentConnection:
         http("POST", f"{self.base}/agents/{self.agent_id}/message", {"room_id": self.room_id, "content": content},
              {"Authorization": f"Bearer {self.key}"})
 
+    def op(self, name: str, args: dict) -> dict:
+        """Call an agent-protocol operation bound to this connection's room."""
+        return http("POST", f"{self.base}/agents/{self.agent_id}/ops/{name}", args,
+                    {"Authorization": f"Bearer {self.key}", "X-Switch-Connection-Id": self.connection_id})
+
     def ws_url(self) -> str:
         ws = self.base.replace("http://", "ws://").replace("https://", "wss://")
         q = f"connection_id={self.connection_id}&rooms={self.room_id}&filter=all&scope=single&client=paidsafe-{self.name}"

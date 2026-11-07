@@ -27,3 +27,4 @@ config/roles.local.json
 state/*.log
 state/*.out
 state/playbooks/*.md
+state/*.json
