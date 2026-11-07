@@ -27,6 +27,10 @@ SYSTEM_AGENTS = {"ledger", "warden"}
 
 MENTION = re.compile(r"@[\w.\-]+")
 APPROVE_OPTION = re.compile(r"^approve\s+\(?([A-D])\)?\.?$", re.I)
+# Switch reserves "!" for its own room commands (it answers "Unknown command" and never forwards them),
+# so the kill switch is addressed to the Warden: "@warden stopall", "@warden resume".
+STOP = re.compile(r"^!?stop\s*all\b", re.I)
+RESUME = re.compile(r"^!?resume\.?$", re.I)
 
 
 def _clean(text: str) -> str:
@@ -56,7 +60,7 @@ class Warden:
         return [f"🧊 **ROOM FROZEN** by {role}: {reason}.\n"
                 f"Every side-effecting tool (send, ledger update, payment) now refuses to run. "
                 f"Agents: stop and reply only \"Paused (room frozen).\" "
-                f"To resume, the *other* verified human types `!resume`."]
+                f"To resume, the *other* verified human types `@warden resume`."]
 
     # ----- main entry -----
     def on_message(self, sender_id: str, sender_name: str, text: str) -> list[str]:
@@ -105,19 +109,19 @@ class Warden:
     # ----- humans -----
     def _on_human(self, sender_id: str, sender_name: str, role: str | None, text: str) -> list[str]:
         low = text.lower()
-        if low.startswith("!stopall"):
+        if STOP.match(low):
             if role not in ("owner", "accountant"):
-                return self._reject(sender_id, sender_name, "!stopall", "Owner or Accountant")
+                return self._reject(sender_id, sender_name, "stopall", "Owner or Accountant")
             if frozen_info(self.room):
                 return ["🧊 Already frozen."]
-            return self._freeze(role, sender_id, f"manual !stopall by the {role}")
+            return self._freeze(role, sender_id, f"manual stopall by the {role}")
 
-        if low.startswith("!resume"):
+        if RESUME.match(low):
             info = frozen_info(self.room)
             if not info:
                 return ["ℹ️ The room is not frozen."]
             if role not in ("owner", "accountant"):
-                return self._reject(sender_id, sender_name, "!resume", "Owner or Accountant")
+                return self._reject(sender_id, sender_name, "resume", "Owner or Accountant")
             if info["by_role"] == role:
                 audit("resume_refused", self.room, sender_id, "same key", role=role)
                 return [f"🔐 **Resume refused:** the {role} froze the room, so the *other* human must resume it "

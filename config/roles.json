@@ -1,0 +1,5 @@
+{
+  "_comment": "Switch sender ids (NOT display names) allowed to act as each role. Get yours by typing '@warden whoami' in the room. These ids are specific to this local deployment.",
+  "owner": "@switch-mattermost-57466b0b-9368-442d-9729-ebc1ebc4b371-user:localhost",
+  "accountant": "@switch-mattermost-57466b0b-9368-442d-9729-ebc1ebc4b371-accountant:localhost"
+}

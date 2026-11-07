@@ -25,7 +25,7 @@ NUMBER = re.compile(
 # Things that look like numbers but aren't claims: ids, section numbers, rounds, list markers, dates in ids.
 IGNORE = [
     re.compile(r"\bINV-\d+\b", re.I),
-    re.compile(r"\b(?:s|sec|section)\.?\s*\d+[A-Z]?(?:\([a-z]\))?", re.I),
+    re.compile(r"\b(?:s|sec|section)\.?\s*\d+[A-Z]?(?:\(\w+\))*", re.I),
     re.compile(r"\bround\s*\d\b", re.I),
     re.compile(r"^\s*\d+[.)]\s", re.M),
     re.compile(r"\((?:[A-D])\)"),

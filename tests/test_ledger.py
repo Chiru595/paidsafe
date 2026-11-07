@@ -19,7 +19,7 @@ def test_full_two_round_debate_ends_with_options_card():
     assert out[0].startswith("❌") and "Round 2" in out[1]
 
     led.on_message("@a-rel", "relationship", "Runway is 8.0 weeks [F5], so we can wait.", False)
-    out = led.on_message("@a-cash", "cash", "Interest is ₹6,820 [F3] and grows.", False)
+    out = led.on_message("@a-cash", "cash", "Interest is ₹7,130 [F3] and grows.", False)
     assert "Options card" in out[-1]
     assert get_state(ROOM, "debate")["status"] == "closed"
 

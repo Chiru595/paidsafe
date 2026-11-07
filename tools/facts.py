@@ -64,7 +64,7 @@ def build_facts(invoice_id: str = "INV-1042", on: date | None = None) -> list[Fa
                    f"({inr(cash['bank_balance_inr'])} in the bank). If {invoice_id} is paid: {runway_paid:.1f} weeks.",
              [round(runway, 1), cash["weekly_burn_inr"], cash["bank_balance_inr"], round(runway_paid, 1)],
              "data/cash.json"),
-        Fact("F6", f"Income Tax s.43B(h): paying an MSE late means {client['name']} can deduct the {inr(amount)} only "
+        Fact("F6", f"Tax lever (Income-tax Act s.43B(h), carried into the 2025 Act as s.37(2)(g)): paying an MSE late means {client['name']} can deduct the {inr(amount)} only "
                    f"in the year it actually pays. At an illustrative {tax_rate}% tax rate that is "
                    f"{inr(tax_at_stake)} of deduction timing at stake for the buyer.",
              [43, amount, tax_rate, tax_at_stake], rules["tax_lever"]["source_url"]),

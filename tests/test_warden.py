@@ -25,7 +25,7 @@ def draft_ready(w):
 # ----- freeze -----
 
 def test_stopall_freezes_and_blocks_every_tool(w):
-    assert "FROZEN" in say(w, OWNER, "!stopall")
+    assert "FROZEN" in say(w, OWNER, "@warden stopall")
     with pytest.raises(Frozen):
         require_not_frozen(ROOM)
     with pytest.raises(Frozen):
@@ -41,27 +41,27 @@ def test_freeze_blocks_send_even_with_full_approvals(w):
 
 
 def test_impostor_cannot_stop(w):
-    out = say(w, IMPOSTOR, "!stopall", "Accountant")
+    out = say(w, IMPOSTOR, "@warden stopall", "Accountant")
     assert "Rejected" in out and frozen_info(ROOM) is None
 
 
 # ----- two-key resume -----
 
 def test_same_person_cannot_resume(w):
-    say(w, OWNER, "!stopall")
-    out = say(w, OWNER, "!resume")
+    say(w, OWNER, "@warden stopall")
+    out = say(w, OWNER, "@warden resume")
     assert "Resume refused" in out and frozen_info(ROOM) is not None
 
 
 def test_other_person_resumes(w):
-    say(w, OWNER, "!stopall")
-    out = say(w, ACCOUNTANT, "!resume")
+    say(w, OWNER, "@warden stopall")
+    out = say(w, ACCOUNTANT, "@warden resume")
     assert "Resumed" in out and frozen_info(ROOM) is None
 
 
 def test_impostor_cannot_resume(w):
-    say(w, OWNER, "!stopall")
-    out = say(w, IMPOSTOR, "!resume", "Accountant")
+    say(w, OWNER, "@warden stopall")
+    out = say(w, IMPOSTOR, "@warden resume", "Accountant")
     assert "Rejected" in out and frozen_info(ROOM) is not None
 
 

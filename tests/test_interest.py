@@ -5,7 +5,12 @@ import pytest
 from tools.interest import StaleRate, india_due_date, india_interest, uk_interest
 from tools.common import inr, load_rules
 
-RULES = load_rules("india_msmed")
+import copy
+
+LIVE = load_rules("india_msmed")
+# Known-answer tests pin the Bank Rate to 5.50% (16.5% statutory) so they don't move when the pack is updated.
+RULES = copy.deepcopy(LIVE)
+RULES["bank_rate"].update(value_pct=5.50, as_of="2026-08-06")
 
 
 def test_due_date_agreed_days_under_cap():
@@ -38,6 +43,11 @@ def test_india_compounds_monthly():
     assert r.full_months == 3
     assert r.interest == pytest.approx(100000 * (1.01375 ** 3 - 1), abs=0.01)
     assert r.interest > 100000 * 0.01375 * 3
+
+
+def test_live_pack_uses_three_times_bank_rate():
+    r = india_interest(480000, date(2026, 9, 6), True, 30, on=date(2026, 11, 7), rules=LIVE)
+    assert r.annual_rate_pct == round(LIVE["bank_rate"]["value_pct"] * 3, 4)
 
 
 def test_demo_invoice_figure():

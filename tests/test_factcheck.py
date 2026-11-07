@@ -2,7 +2,7 @@ from tools.factcheck import check
 
 
 def test_cited_correct_numbers_pass():
-    post = ("MegaMart owes ₹4,80,000 [F1] and is 32 days overdue [F2]. Interest is ₹6,820 [F3]. "
+    post = ("MegaMart owes ₹4,80,000 [F1] and is 32 days overdue [F2]. Interest is ₹7,130 [F3]. "
             "They are 30% of revenue [F4]. Runway is 8.0 weeks [F5].")
     assert check(post) == []
 
@@ -32,7 +32,7 @@ def test_lakh_format_accepted():
 
 
 def test_sections_ids_and_rounds_are_not_claims():
-    assert check("Round 2: under s.43B(h) and s.16 the buyer loses on INV-1042 [F6].") == []
+    assert check("Round 2: under s.43B(h), s.37(2)(g) and s.16 the buyer loses on INV-1042 [F6].") == []
 
 
 def test_text_without_numbers_passes():

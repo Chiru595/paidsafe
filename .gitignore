@@ -20,3 +20,7 @@ venv/
 Thumbs.db
 .vscode/
 .claude/settings.local.json
+
+# agent API keys
+.agents.json
+config/roles.local.json
