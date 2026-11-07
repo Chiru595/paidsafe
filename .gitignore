@@ -28,3 +28,4 @@ state/*.log
 state/*.out
 state/playbooks/*.md
 state/*.json
+state/playbooks/*.json
