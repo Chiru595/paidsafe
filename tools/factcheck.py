@@ -94,9 +94,13 @@ def split_sentences(text: str) -> list[str]:
     return units
 
 
-def check(text: str, facts: list[Fact] | None = None) -> list[Flag]:
+def check(text: str, facts: list[Fact] | None = None, require_citation: bool = False) -> list[Flag]:
+    """`require_citation`: a debate post must rest on at least one fact card (no evidence-free opinions)."""
     idx = facts_index(facts or build_facts())
     flags: list[Flag] = []
+    if require_citation and not _cited(text):
+        first = split_sentences(text)[0] if text.strip() else ""
+        flags.append(Flag(first, "the post cites no fact card at all"))
     for sent in split_sentences(text):
         nums = _numbers(sent)
         cited = _cited(sent)

@@ -106,15 +106,16 @@ def options_card(invoice_id: str = "INV-1042", on: date | None = None) -> str:
     interest = facts["F3"].values[0]
     burn = cash["weekly_burn_inr"]
     impact = {
-        "A": f"recover {inr(amount * 0.99)} sooner; give up {inr(amount * 0.01)} discount and {inr(interest)} interest",
+        "A": f"recover {inr(amount * 0.99)} sooner; give up {inr(amount * 0.01)} discount [F1] and {inr(interest)} interest [F3]",
         "B": f"claim {inr(amount + interest)} (principal + interest [F3]); some relationship risk [F4]",
         "C": f"claim {inr(amount + interest)} with legal backing; highest relationship risk [F4]",
-        "D": f"runway drops by 2 weeks of burn ({inr(2 * burn)}) to {(cash['bank_balance_inr'] - 2 * burn) / burn:.1f} weeks [F5]; interest keeps accruing",
+        "D": f"runway drops by 2 weeks of burn ({inr(2 * burn)}) to {(cash['bank_balance_inr'] - 2 * burn) / burn:.1f} weeks [F5]; interest keeps accruing [F3]",
     }
     lines = ["### 🧾 Options card (Ledger, template-based)"]
     for k, (desc, side) in OPTIONS.items():
         lines.append(f"- **({k})** {desc}. Cash impact: {impact[k]}. _Drafted by: {side}_")
-    lines += ["", "Owner: reply `approve A`, `approve B`, `approve C` or `approve D`."]
+    lines += ["", "Every impact above is computed from the cited fact cards. "
+              "Owner: reply `approve A`, `approve B`, `approve C` or `approve D`."]
     return "\n".join(lines)
 
 

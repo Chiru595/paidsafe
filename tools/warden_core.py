@@ -16,8 +16,8 @@ from tools.common import (
     Frozen, audit, freeze, frozen_info, get_state, is_auto_reply, load_roles, record_approval, record_rejection,
     set_state, unfreeze,
 )
-from tools.factcheck import _numbers
-from tools.facts import OPTIONS, build_facts
+from tools.evidence import render_proofs, verify_draft
+from tools.facts import OPTIONS
 from tools.send_client_message import NotApproved, draft_hash, send
 
 BREAKER_LIMIT = int(os.environ.get("PAIDSAFE_BREAKER_LIMIT", "12"))
@@ -97,13 +97,18 @@ class Warden:
 
     def _capture_draft(self, name: str, text: str) -> list[str]:
         h = draft_hash(text)
-        set_state(self.room, "draft", {"text": text.strip(), "hash": h, "by": name})
-        audit("draft", self.room, None, f"draft captured from {name}", draft=h)
-        values = [v for f in build_facts(self.invoice_id) for v in f.values]
-        bad = [n for n in _numbers(text) if n >= 100 and not any(abs(n - v) <= max(1, 0.005 * v) for v in values)]
-        check = ("✅ every amount in the draft matches a fact card" if not bad else
-                 "❌ amounts not on any fact card: " + ", ".join(f"{b:,.0f}" for b in bad))
-        return [f"📝 **Draft captured** from {name} (hash `{h}`). {check}.\n"
+        ev = verify_draft(text, self.invoice_id)
+        set_state(self.room, "draft", {"text": text.strip(), "hash": h, "by": name, "verified": ev.ok,
+                                       "facts_hash": ev.facts_hash})
+        audit("draft", self.room, None, f"draft captured from {name}", draft=h, verified=ev.ok,
+              facts_hash=ev.facts_hash, problems=ev.problems)
+        if not ev.ok:
+            set_state(self.room, "draft_request", None)
+            return [f"📝 Draft from {name} (hash `{h}`) **failed the evidence check** and cannot be approved:\n"
+                    + "\n".join(f"- ❌ {p}" for p in ev.problems)
+                    + f"\nOwner: type `approve {get_state(self.room, 'decision')['option']}` again to request a redraft."]
+        return [f"📝 **Draft captured** from {name} (hash `{h}`). ✅ Evidence check passed: every amount traces "
+                f"to a fact card (facts `{ev.facts_hash}`).\n{render_proofs(ev)}\n"
                 f"Next: **Accountant** types `approve numbers`, then **Owner** types `approve send`."]
 
     # ----- humans -----
@@ -174,6 +179,8 @@ class Warden:
         draft = get_state(self.room, "draft")
         if not draft:
             return ["ℹ️ No draft to approve yet."]
+        if not draft.get("verified"):
+            return [f"⛔ Draft `{draft['hash']}` failed the evidence check, so it cannot be approved. Request a redraft."]
         if kind == "send" and not get_state(self.room, "approved_numbers_" + draft["hash"]):
             return [f"⏳ The Accountant must `approve numbers` for draft `{draft['hash']}` first."]
         record_approval(self.room, kind, draft["hash"], sender_id, role)

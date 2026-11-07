@@ -60,7 +60,7 @@ class Ledger:
         status = debate.get("status")
         if status not in ("round1", "round2") or frozen_info(self.room):
             return []
-        out = [render(name, check(text, build_facts(self.invoice_id)))]
+        out = [render(name, check(text, build_facts(self.invoice_id), require_citation=True))]
         posted = debate.setdefault("posted", {})
         posts = debate.setdefault("posts", {})
         if name not in posted:

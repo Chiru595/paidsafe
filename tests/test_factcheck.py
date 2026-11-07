@@ -50,3 +50,8 @@ def test_number_cited_to_neighbouring_card_is_flagged():
 
 def test_dates_are_not_amounts():
     assert check("Accepted on 06 Sep 2026, due 2026-10-06 [F2].") == []
+
+
+def test_debate_post_must_cite_something():
+    flags = check("We should just wait and see, it will be fine.", require_citation=True)
+    assert len(flags) == 1 and "cites no fact card" in flags[0].problem

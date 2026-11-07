@@ -14,6 +14,7 @@ import hashlib
 from datetime import datetime
 
 from tools.common import OUTBOX, ROOT, audit, get_state, has_approval, require_not_frozen, set_state
+from tools.evidence import render_proofs, verify_draft
 
 PLAYBOOKS = ROOT / "state" / "playbooks"
 
@@ -41,6 +42,9 @@ def send(room: str, invoice_id: str = "INV-1042", client_key: str = "megamart") 
         raise NotApproved(f"The verified Accountant has not approved the numbers in draft {h}.")
     if not has_approval(room, "send", h, "owner"):
         raise NotApproved(f"The verified Owner has not approved sending draft {h}.")
+    ev = verify_draft(draft["text"], invoice_id)  # re-checked here: the tool trusts no earlier step
+    if not ev.ok:
+        raise NotApproved("Draft failed the evidence check: " + "; ".join(ev.problems))
     if get_state(room, "sent_hash") == h:
         raise NotApproved(f"Draft {h} was already sent.")
 
@@ -49,26 +53,33 @@ def send(room: str, invoice_id: str = "INV-1042", client_key: str = "megamart") 
     path = OUTBOX / f"{invoice_id}-{decision['option']}-{h}-{stamp}.md"
     path.write_text(
         f"To: {client_key} (simulated)\nInvoice: {invoice_id}\nOption: {decision['option']}\n"
-        f"Draft hash: {h}\nApproved by: accountant (numbers), owner (send)\n\n{draft['text']}\n",
+        f"Draft hash: {h}\nFacts hash: {ev.facts_hash}\n"
+        f"Approved by: verified accountant (numbers), verified owner (send)\n\n{draft['text']}\n\n---\n"
+        f"Evidence (every amount above, traced to a Ledger fact card):\n{render_proofs(ev)}\n"
+        f"Calculations follow cited public rules for information only. Not legal or financial advice.\n",
         encoding="utf-8",
     )
     set_state(room, "sent_hash", h)
-    audit("send", room, None, f"simulated send of {invoice_id} option {decision['option']}", draft=h, file=path.name)
-    append_playbook(client_key, invoice_id, decision["option"], decision.get("label", ""))
+    audit("send", room, None, f"simulated send of {invoice_id} option {decision['option']}", draft=h, file=path.name,
+          facts_hash=ev.facts_hash, evidence=[p["fact"] for p in ev.proofs])
+    append_playbook(client_key, invoice_id, decision["option"], decision.get("label", ""),
+                    sorted({p["fact"] for p in ev.proofs}), ev.facts_hash)
     try:
         return str(path.relative_to(ROOT)).replace("\\", "/")
     except ValueError:
         return str(path)
 
 
-def append_playbook(client_key: str, invoice_id: str, option: str, label: str) -> None:
+def append_playbook(client_key: str, invoice_id: str, option: str, label: str,
+                    evidence: list[str] | None = None, fhash: str = "") -> None:
     PLAYBOOKS.mkdir(parents=True, exist_ok=True)
     path = PLAYBOOKS / f"{client_key}.md"
     if not path.exists():
         path.write_text(f"# Playbook: {client_key}\n\n", encoding="utf-8")
     with open(path, "a", encoding="utf-8") as f:
         f.write(f"- {datetime.now():%Y-%m-%d}: {invoice_id} -> option {option} ({label}). "
-                f"Outcome: pending (fill in when paid).\n")
+                f"Evidence: {', '.join(evidence or []) or 'n/a'} (facts {fhash}). "
+                f"Approved by the verified Accountant and Owner. Outcome: pending (fill in when paid).\n")
 
 
 if __name__ == "__main__":
