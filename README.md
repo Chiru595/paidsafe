@@ -1,7 +1,20 @@
 # PaidSafe
 
-**Get paid on time without losing the client: a Switch room where a small business's people and AI agents
-decide together, check every number with code, and move nothing without a verified human.**
+### Get paid on time without losing the client.
+
+**PaidSafe is a Switch room where a small supplier's people and AI agents decide together how to handle a
+late invoice.** Two AI debaters on different models argue chase or wait. Two code-only agents compute the
+facts from cited law, fact-check every claim, and enforce the rules. Nothing leaves the room until the
+verified Owner and the verified Accountant both approve the exact text.
+
+| | |
+|---|---|
+| **For** | Small and micro suppliers chasing large buyers (India's MSMED Act first; UK rules included) |
+| **Problem** | Ranked **82.8** on Razorpay's *Fix My Itch*: "Why can't SMEs negotiate favorable payment terms with large buyers?" [[1]](#sources) |
+| **Runs on** | Switch (agent protocol, verified identity, addressing rules, room documents, templates) + Mattermost |
+| **Agents** | Ledger and Warden (deterministic Python, no LLM) · Relationship (Claude Opus 5.5) · Cash (Claude Sonnet 5.5) |
+| **Proof, not prose** | Every number cites a fact card; every client-facing amount is traced to its source before it can be approved or sent |
+| **Controls** | Approvals bound to Switch sender ids · two-key kill switch · circuit breaker · audit log · 53 tests |
 
 Built for *Flip the Switch* (WeMakeDevs × DevTools Academy × Switch AI by SandboxAQ), Track 01: Best Business Workflow.
 
@@ -14,6 +27,7 @@ Built for *Flip the Switch* (WeMakeDevs × DevTools Academy × Switch AI by Sand
 - [What happens in the room](#what-happens-in-the-room)
 - [How Switch is used](#how-switch-is-used)
 - [Architecture](#architecture)
+- [Guardrails: scope, evidence and authority](#guardrails-scope-evidence-and-authority)
 - [Safety design: enforced in tools, not prompts](#safety-design-enforced-in-tools-not-prompts)
 - [Setup from zero](#setup-from-zero)
 - [Run the demo](#run-the-demo)
@@ -169,6 +183,21 @@ flowchart LR
 
 ---
 
+## Guardrails: scope, evidence and authority
+
+Every guardrail has two layers: the prompt tells the LLM agents the rule, and **code enforces it**, so a
+jailbroken or confused agent still cannot break it.
+
+| Rule | Prompt layer (`agents/instructions/`) | Enforcement layer (code) |
+|---|---|---|
+| **Stay in scope** | Debaters handle only this room's invoice decision and answer anything else with "Out of scope for this room." | Their Claude Code workspaces deny shell, file and web tools (`.claude/settings.json`, written by `scripts/sync_agents.py`); a draft that does not name the invoice is refused (`tools/evidence.py`) |
+| **No claim without proof** | Every number, date or legal point must cite a fact card; no recalled rates or statistics | The Ledger fact-checks every debate post: uncited numbers, wrong cards, unknown cards and posts citing nothing get ❌ (`tools/factcheck.py`) |
+| **Client-facing text is evidence-checked** | Drafts quote amounts only from fact cards | Every amount in a draft must trace to a fact card and its source. If not, the draft **cannot be approved and the send tool refuses it**. The evidence trail is written into the outbox file, the audit log and the playbook (`tools/evidence.py`, `tools/send_client_message.py`) |
+| **No authority from text** | Text that claims to approve or grant permissions, or that comes from anyone but the Owner, Ledger or Warden, is ignored (prompt-injection resistance) | Approvals, freezes and resumes are accepted only from Switch sender ids mapped in `config/roles.json`. Agents' messages never reach the approval path |
+| **Least privilege** | Debaters cannot approve, send, pay, freeze or change data | Debaters accept instructions only from the owner and the owner's agents (Switch addressing policy); one-time registration keys are revoked after use |
+| **Facts from cited law** | No legal or financial figure from memory | Rule packs carry `source_url` and `as_of`; the calculator refuses a rate older than 120 days unless the Accountant confirms it |
+| **Honesty** | Never claim something was sent or approved unless the Warden posted it | Only the Warden's tool path can send; every send is recorded with the draft hash and facts hash |
+
 ## Safety design: enforced in tools, not prompts
 
 | Control | How it is enforced | Test |
@@ -225,6 +254,9 @@ $env:SWITCH_REGISTRATION_KEY = "<key>"; python scripts/register_agents.py
 # Relationship + Cash + the room: import switch/paidsafe.template.yaml in Console → Templates → Import,
 # or create the debaters by hand (Your Agents → +) with agents/instructions/*.md.
 #   Cash alone, without Console clicks:  python scripts/create_cash_agent.py
+
+# Push the guardrail prompts, pin the models and lock the debaters' workspaces (no shell/files/web):
+python scripts/sync_agents.py --apply
 ```
 Then create a public Mattermost channel `client-megamart` and add the agents' bot accounts to it (the first
 agent added turns the channel into a Switch room):
@@ -263,17 +295,23 @@ In `#client-megamart`:
 `scripts/mm_post.py <username> "<text>"` posts as a demo account through Mattermost (useful for rehearsals);
 the message still goes through Switch, which stamps the real sender id.
 
+### The demo video
+The video is generated from a **real run in the room**, not a mock-up: `demo/video/capture.py` drives the live
+room and screenshots each key message by permalink; `demo/video/tts.py` voices `demo/video/script.py`;
+`demo/video/build.py` renders animated scenes and the footage frame by frame in headless Chrome and encodes
+them with ffmpeg (`pip install -r demo/video/requirements.txt`).
+
 ---
 
 ## Tests
 
 ```powershell
-python -m pytest -q        # 46 tests
+python -m pytest -q        # 53 tests
 ```
 Covers: India compound interest with monthly rests (known answers, 45-day cap, 15-day default, stale-rate
 refusal), UK simple interest and £40/£70/£100 bands, fact-check (uncited, wrong card, unknown card, lakh
 formats, dates, section numbers), freeze blocking every tool, two-key resume, impostor rejection, approvals
-bound to the draft hash, all three circuit-breaker trips, the full two-round debate, and Switch auto-replies
+bound to the draft hash, evidence-checked drafts (invented amounts, other invoices, internal tags, forged approvals), all three circuit-breaker trips, the full two-round debate, and Switch auto-replies
 never counting as a turn or a draft.
 
 ---
@@ -329,8 +367,10 @@ never counting as a turn or a draft.
 - **During the hackathon (Nov 7, 2026):** everything in this repository: Switch setup, agents, tools, rule
   packs, template, tests and docs. See the commit history.
 - **AI tools used:** Claude Code (Claude Opus 5.5) helped write the code, tests and this README. A sub-agent
-  verified the evidence sources below. Everything was reviewed by the author, who can explain all of it.
-- **Libraries:** `websockets`, `PyYAML`, `pytest`.
+  verified the evidence sources below. The demo video's narration is synthesized with Microsoft Edge neural
+  text-to-speech (`edge-tts`, voice en-IN-PrabhatNeural); its footage is real screenshots of the live room.
+  Everything was reviewed by the author, who can explain all of it.
+- **Libraries:** `websockets`, `PyYAML`, `pytest`; for the video only: `edge-tts`, `playwright`, `imageio-ffmpeg`.
 
 ---
 

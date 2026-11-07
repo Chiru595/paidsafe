@@ -21,4 +21,4 @@ Do one throwaway `@warden whoami` from each account first, so Switch has created
 | 1:05–1:15 | Impostor types `approve B` → ⛔ | "Same display name, 'Accountant'. Switch stamps a sender id on every message, and the Warden only trusts that." |
 | 1:15–1:35 | Owner `approve B` → Cash drafts → Accountant `approve numbers` → Owner `approve send` → 📤 | "Two verified approvals on this exact draft hash, then a simulated send. The playbook is saved as a Switch room document only the Warden can edit." |
 | 1:35–1:50 | Owner `@warden stopall` → Owner `@warden resume` (refused) → Accountant `@warden resume` | "Kill switch. It's enforced in the tools, not the prompt, and resuming needs the other person's key." |
-| 1:50–2:00 | Terminal: `python -m pytest -q` (46 passed) + README feature table | "Different models, deterministic checks, every rupee approved by a verified human. That's PaidSafe on Switch." |
+| 1:50–2:00 | Terminal: `python -m pytest -q` (53 passed) + README feature table | "Different models, deterministic checks, every rupee approved by a verified human. That's PaidSafe on Switch." |

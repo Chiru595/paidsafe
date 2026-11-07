@@ -1,0 +1,43 @@
+"""Narration and scene plan for the 2-minute PaidSafe video. Shared by tts.py and build.py."""
+
+VOICE = "en-IN-PrabhatNeural"
+RATE = "+6%"
+
+SCENES = [
+    ('title', 'title',
+     "This is PaidSafe: a Switch room where a small business's people and AI agents decide, together, whether to chase a late invoice.",
+     {}),
+    ('problem', 'problem',
+     "Razorpay's Fix My Itch scores unfair payment terms from big buyers at eighty-two point eight, one of India's top business problems. Fifty-nine percent of US small businesses wait over thirty days to get paid. And fraud now arrives in chat.",
+     {}),
+    ('room', 'room',
+     "Two people and four agents share one Switch room. The Ledger and the Warden are plain code, so they can't invent a number or bend a rule. The debaters run on two different Claude models.",
+     {}),
+    ('facts', 'shot',
+     'The owner asks: chase, or wait? The Ledger posts fact cards from cited law: thirty-two days overdue, and seven thousand one hundred thirty rupees of interest already owed.',
+     {'img': '01_facts.png', 'label': '1 · Fact cards from cited rules', 'from': 0.38, 'to': 0.52}),
+    ('debate', 'shot',
+     'The agents argue, citing a card for every number, and the Ledger fact-checks each post, live.',
+     {'img': '02_round1.png', 'label': '2 · Debate, fact-checked live', 'from': 0.38, 'to': 0.52}),
+    ('options', 'shot',
+     'After two rounds, four options, each with its cash impact.',
+     {'img': '03_options.png', 'label': '3 · Options with cash impact', 'from': 0.38, 'to': 0.52}),
+    ('impostor', 'shot',
+     'An impostor with the same display name tries to approve. Switch stamps a verified sender id on every message, and the Warden trusts only that. Rejected.',
+     {'img': '04_impostor.png', 'label': '4 · Impostor rejected by Switch sender id', 'from': 0.38, 'to': 0.52}),
+    ('draft', 'shot',
+     'The owner picks option B. Cash drafts it, and the Warden proves every amount traces to a fact card.',
+     {'img': '05_draft.png', 'label': '5 · Draft with evidence check', 'from': 0.38, 'to': 0.52}),
+    ('sent', 'shot',
+     'The accountant approves the numbers, the owner approves sending. Then a simulated send, an audit trail, and a playbook saved as a Switch room document.',
+     {'img': '06_sent.png', 'label': '6 · Two verified approvals → simulated send', 'from': 0.38, 'to': 0.52}),
+    ('kill', 'shot2',
+     "One command freezes the room. It's enforced inside every tool, and only the other person can unfreeze it.",
+     {'img': '07_frozen.png', 'img2': '08_resumed.png', 'label': '7 · Kill switch with two-key resume'}),
+    ('hood', 'hood',
+     'Built on the Switch agent protocol, verified identities, addressing rules, room documents and a validated template. With guardrails, and fifty-three tests.',
+     {}),
+    ('end', 'end',
+     'PaidSafe. Every rupee, approved by a verified human.',
+     {}),
+]
