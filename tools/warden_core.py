@@ -49,8 +49,8 @@ class Warden:
 
     def _reject(self, sender_id: str, sender_name: str, what: str, needed: str) -> list[str]:
         n = record_rejection(self.room, sender_id, f"{what} needs {needed}")
-        out = [f"⛔ **Rejected:** `{what}` needs the verified **{needed}**. Sender id `{sender_id}` "
-               f"(display name \"{sender_name}\") is not that person. Display names are ignored."]
+        out = [f"⛔ **Rejected:** `{what}` needs the verified **{needed}**. Switch sender id `{sender_id}` "
+               f"(@{sender_name}) is not that person. Display names are ignored: only the Switch sender id counts."]
         if n > REJECTION_LIMIT and not frozen_info(self.room):
             out += self._freeze("warden", None, f"circuit breaker: {n} rejected approval attempts in 10 minutes")
         return out

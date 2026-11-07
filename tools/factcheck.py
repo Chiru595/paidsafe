@@ -30,6 +30,11 @@ IGNORE = [
     re.compile(r"^\s*\d+[.)]\s", re.M),
     re.compile(r"\((?:[A-D])\)"),
     re.compile(r"\bFY\s*\d{2,4}(?:-\d{2,4})?\b", re.I),
+    # Dates: "06 Sep 2026", "Sep 6, 2026", "2026-10-06", "6/10/2026"
+    re.compile(r"\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?,?\s+\d{4}\b", re.I),
+    re.compile(r"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}\b", re.I),
+    re.compile(r"\b\d{4}-\d{2}-\d{2}\b"),
+    re.compile(r"\b\d{1,2}/\d{1,2}/\d{2,4}\b"),
 ]
 MULTIPLIER = {"%": 1, "l": 1e5, "lakh": 1e5, "lakhs": 1e5, "lac": 1e5, "lacs": 1e5, "k": 1e3,
               "cr": 1e7, "crore": 1e7, "crores": 1e7}

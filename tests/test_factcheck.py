@@ -46,3 +46,7 @@ def test_citation_covers_its_whole_bullet():
 def test_number_cited_to_neighbouring_card_is_flagged():
     flags = check("- INV-1042 is ₹4,80,000 and 32 days overdue [F2].")
     assert len(flags) == 1 and "480,000 is not on F2" in flags[0].problem
+
+
+def test_dates_are_not_amounts():
+    assert check("Accepted on 06 Sep 2026, due 2026-10-06 [F2].") == []
