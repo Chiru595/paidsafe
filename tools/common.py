@@ -65,6 +65,15 @@ def inr(amount: float) -> str:
     return ("-" if neg else "") + "₹" + s
 
 
+# Switch posts these on an agent's behalf (content marker com.switch.auto_reply); they are not the agent's
+# own words, so they never count as a debate turn, a draft, or a circuit-breaker tick.
+AUTO_REPLY_PREFIXES = ("Starting a session to handle this", "Hi! I'm here to help", "Hi! I'm ")
+
+
+def is_auto_reply(body: str) -> bool:
+    return (body or "").strip().startswith(AUTO_REPLY_PREFIXES)
+
+
 # ---------- state ----------
 
 SCHEMA = """

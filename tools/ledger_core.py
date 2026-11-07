@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import re
 
-from tools.common import frozen_info, get_state, load_roles, set_state
+from tools.common import frozen_info, get_state, is_auto_reply, load_roles, set_state
 from tools.factcheck import check, render
 from tools.facts import build_facts, options_card, render_fact_cards
 
@@ -34,7 +34,7 @@ class Ledger:
         if name in SYSTEM_AGENTS:
             return []
         if name in self.debaters and sender_id not in load_roles():
-            return self._on_debater(name, text)
+            return [] if is_auto_reply(text) else self._on_debater(name, text)
         if addressed and START.search(text):
             return self._start(sender_id)
         return []

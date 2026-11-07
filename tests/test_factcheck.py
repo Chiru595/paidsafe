@@ -37,3 +37,12 @@ def test_sections_ids_and_rounds_are_not_claims():
 
 def test_text_without_numbers_passes():
     assert check("We should keep the relationship warm and ask politely.") == []
+
+
+def test_citation_covers_its_whole_bullet():
+    assert check("- Runway is 8.0 weeks. Payment lifts it to 12.0 weeks [F5].") == []
+
+
+def test_number_cited_to_neighbouring_card_is_flagged():
+    flags = check("- INV-1042 is ₹4,80,000 and 32 days overdue [F2].")
+    assert len(flags) == 1 and "480,000 is not on F2" in flags[0].problem

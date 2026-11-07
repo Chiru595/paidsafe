@@ -13,7 +13,7 @@ import re
 import time
 
 from tools.common import (
-    Frozen, audit, freeze, frozen_info, get_state, load_roles, record_approval, record_rejection,
+    Frozen, audit, freeze, frozen_info, get_state, is_auto_reply, load_roles, record_approval, record_rejection,
     set_state, unfreeze,
 )
 from tools.factcheck import _numbers
@@ -69,7 +69,7 @@ class Warden:
             return []
         role = self.role_of(sender_id)
         if name in self.debaters and not role:
-            return self._on_debater(name, text)
+            return [] if is_auto_reply(text) else self._on_debater(name, text)
         set_state(self.room, "agent_streak", 0)  # a human spoke
         return self._on_human(sender_id, sender_name, role, _clean(text))
 

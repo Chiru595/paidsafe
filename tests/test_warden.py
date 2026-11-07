@@ -137,3 +137,9 @@ def test_debate_past_round_cap_trips_breaker(w):
     say(w, "@agent-cash", "Round 3, I insist.", "cash")
     out = say(w, "@agent-relationship", "Round 3 rebuttal.", "relationship")
     assert "round cap" in out
+
+
+def test_switch_auto_reply_is_never_captured_as_draft(w):
+    say(w, OWNER, "approve B", "user")
+    assert say(w, "@agent-cash", "Starting a session to handle this — one moment.", "cash") == ""
+    assert "Draft captured" in say(w, "@agent-cash", "Dear MegaMart, please pay ₹4,80,000.", "cash")

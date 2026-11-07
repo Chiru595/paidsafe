@@ -75,8 +75,18 @@ def _matches(value: float, fact: Fact) -> bool:
 
 
 def split_sentences(text: str) -> list[str]:
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-Z₹(\[*-])|\n+", text)
-    return [p.strip() for p in parts if p and p.strip()]
+    """Claim units. A line (e.g. a bullet) that carries a citation is one unit, so "Runway is 8.0 weeks.
+    Payment lifts it to 12.0 weeks [F5]." is covered by its [F5]. Uncited lines are split into sentences."""
+    units: list[str] = []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if CITE.search(line) or MULTI_CITE.search(line):
+            units.append(line)
+        else:
+            units += [p.strip() for p in re.split(r"(?<=[.!?])\s+(?=[A-Z₹(\[*-])", line) if p.strip()]
+    return units
 
 
 def check(text: str, facts: list[Fact] | None = None) -> list[Flag]:
