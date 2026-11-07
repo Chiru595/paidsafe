@@ -32,7 +32,7 @@ decisions together, safely.**
 
 Built for *Flip the Switch* (WeMakeDevs × DevTools Academy × Switch AI by SandboxAQ), Track 01: Best Business Workflow.
 
-> 🎥 **Demo video:** _link to be added_ · All data is synthetic · Sends are simulated · Not legal or financial advice
+> 🎥 **Demo video (2:57):** https://youtu.be/I1lgDGZaDn8 · All data is synthetic · Sends are simulated · Not legal or financial advice
 
 ---
 
