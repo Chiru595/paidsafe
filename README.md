@@ -1,20 +1,34 @@
 # PaidSafe
 
-### Get paid on time without losing the client.
+### Decide with proof. Approve with certainty. Learn from every outcome.
 
-**PaidSafe is a Switch room where a small supplier's people and AI agents decide together how to handle a
-late invoice.** Two AI debaters on different models argue chase or wait. Two code-only agents compute the
-facts from cited law, fact-check every claim, and enforce the rules. Nothing leaves the room until the
-verified Owner and the verified Accountant both approve the exact text.
+**PaidSafe is a team chat room, built on Switch, where a small business's people and AI agents make money
+decisions together, safely.**
+
+## The pitch, in one minute
+
+**Two things cost small suppliers money, and both happen in chat:**
+
+1. **Money in: big customers pay late.** The owner is stuck. Push too hard and lose the customer; wait too
+   long and miss payroll. Most never claim the late-payment interest the law already grants them. Razorpay's
+   *Fix My Itch* scores this **82.8**: "Why can't SMEs negotiate favorable payment terms with large buyers?" [[1]](#sources)
+2. **Money out: fake approvals.** Someone poses as the accountant, types "approved", and money leaves.
+   Business email compromise cost **$3.05B** in 2025, and a wire request has been deepfaked over Slack [[5]](#sources)[[6]](#sources).
+
+**PaidSafe does three jobs in one room:**
+
+| Job | What happens | Why you can trust it |
+|---|---|---|
+| **Decide** (chase or wait?) | Two AI debaters on different models argue; a code-only Ledger posts the facts from cited law and fact-checks every post | No number without a fact card; uncited or wrong numbers get a ❌ |
+| **Protect** (no fake approvals) | Nothing goes out until the verified Owner and the verified Accountant both approve the exact text; an impostor with the same name is rejected; anyone verified can freeze everything | Identity comes from the Switch sender id, never a display name; checks live in the tools, not the prompts |
+| **Learn** (memory) | The verified Accountant records what happened (`paid in 12 days`). The next debate for that client starts from that memory as fact card **F7** and marks the option that worked | The playbook is written only by the Warden and mirrored to a Switch room document |
 
 | | |
 |---|---|
-| **For** | Small and micro suppliers chasing large buyers (India's MSMED Act first; UK rules included) |
-| **Problem** | Ranked **82.8** on Razorpay's *Fix My Itch*: "Why can't SMEs negotiate favorable payment terms with large buyers?" [[1]](#sources) |
-| **Runs on** | Switch (agent protocol, verified identity, addressing rules, room documents, templates) + Mattermost |
+| **Today** | One mock client (MegaMart), four basic agents, two people, India's MSMED rules (UK pack included) |
+| **Next** | The same template opens a room per client, adds agents, and adds supplier rooms that check payment requests for fraud |
 | **Agents** | Ledger and Warden (deterministic Python, no LLM) · Relationship (Claude Opus 5.5) · Cash (Claude Sonnet 5.5) |
-| **Proof, not prose** | Every number cites a fact card; every client-facing amount is traced to its source before it can be approved or sent |
-| **Controls** | Approvals bound to Switch sender ids · two-key kill switch · circuit breaker · audit log · 53 tests |
+| **Controls** | Approvals bound to Switch sender ids · evidence-checked drafts · two-key kill switch · circuit breaker · audit log · 59 tests |
 
 Built for *Flip the Switch* (WeMakeDevs × DevTools Academy × Switch AI by SandboxAQ), Track 01: Best Business Workflow.
 
@@ -25,6 +39,7 @@ Built for *Flip the Switch* (WeMakeDevs × DevTools Academy × Switch AI by Sand
 ## Contents
 - [The problem](#the-problem)
 - [What happens in the room](#what-happens-in-the-room)
+- [Memory: decisions get smarter](#memory-decisions-get-smarter)
 - [How Switch is used](#how-switch-is-used)
 - [Architecture](#architecture)
 - [Guardrails: scope, evidence and authority](#guardrails-scope-evidence-and-authority)
@@ -121,6 +136,17 @@ better with diverse models [[11]](#sources)[[12]](#sources).
 At any point: `@warden stopall` freezes the room; `@warden resume` must come from the **other** human.
 
 ---
+
+## Memory: decisions get smarter
+
+1. After a verified send, the Warden appends the decision (invoice, option, evidence cards, facts hash) to the
+   client's playbook (`tools/memory.py`), mirrored to the `megamart-playbook` Switch room document.
+2. When the client pays, the **verified Accountant** types `@warden outcome paid 12` (or `outcome unpaid`).
+   Anyone else is rejected by sender id.
+3. The next debate for that client (for example `@ledger MegaMart is late again on INV-1058. Chase or wait?`)
+   opens with **F7**: "Memory: option (B) firm reminder; outcome: paid 12 days after the message". The
+   options card marks ⭐ the option that worked [F7]. Debaters must cite F7 like any card, and the
+   fact-checker rejects a misquoted memory.
 
 ## How Switch is used
 
@@ -291,6 +317,8 @@ In `#client-megamart`:
 | Owner | `@warden stopall` | 🧊 Frozen; tools refuse |
 | Owner | `@warden resume` | 🔐 Refused (two-key) |
 | Accountant | `@warden resume` | ▶️ Resumed |
+| Accountant | `@warden outcome paid 12` | 📒 Outcome recorded in the playbook and room document |
+| Owner | `@ledger MegaMart is late again on INV-1058. Chase or wait?` | Fact cards now include **F7** (memory); options card marks ⭐ what worked |
 
 `scripts/mm_post.py <username> "<text>"` posts as a demo account through Mattermost (useful for rehearsals);
 the message still goes through Switch, which stamps the real sender id.
@@ -306,12 +334,12 @@ them with ffmpeg (`pip install -r demo/video/requirements.txt`).
 ## Tests
 
 ```powershell
-python -m pytest -q        # 53 tests
+python -m pytest -q        # 59 tests
 ```
 Covers: India compound interest with monthly rests (known answers, 45-day cap, 15-day default, stale-rate
 refusal), UK simple interest and £40/£70/£100 bands, fact-check (uncited, wrong card, unknown card, lakh
 formats, dates, section numbers), freeze blocking every tool, two-key resume, impostor rejection, approvals
-bound to the draft hash, evidence-checked drafts (invented amounts, other invoices, internal tags, forged approvals), all three circuit-breaker trips, the full two-round debate, and Switch auto-replies
+bound to the draft hash, outcome memory (F7, ⭐, accountant-only outcomes), evidence-checked drafts (invented amounts, other invoices, internal tags, forged approvals), all three circuit-breaker trips, the full two-round debate, and Switch auto-replies
 never counting as a turn or a draft.
 
 ---
