@@ -27,7 +27,14 @@ about 5 hours left. Scope everything to that.
 - Switch auto-creates a room for each public Mattermost channel (bridge log: "Auto-created channel_public room").
 - Docs say the agent protocol's SSE transport is deprecated: custom agents use WebSocket
   `/agents/{id}/connection/ws`; register via `POST /agents` with a `registration` API key.
-- Next: room `client-megamart`, first agent replying (go/no-go).
+- **Room creation gotcha:** a Mattermost channel becomes a Switch room only when an agent's *bot account*
+  is added to it. `!invite-agent` typed in a channel that isn't a room yet gets no reply (the bridge isn't
+  listening there). Fix: `mmctl --local channel users add switch:<channel> <agent-name>` (or Mattermost
+  "Add members" → the agent's bot).
+- Room `client-megamart` = `sw_room_b7970d13a1484f7d83d161ee4d19c204`. Agent `relationship`
+  (Claude Code, id `bbdbff99-16e2-46e0-acf3-638af41d043c`, workspace `..\paidsafe-agents\relationship`,
+  kept outside the repo so it doesn't load this CLAUDE.md).
+- Next: go/no-go — `@relationship` replies in `#client-megamart`.
 
 ## Cut scope for tonight (decided)
 KEEP:
